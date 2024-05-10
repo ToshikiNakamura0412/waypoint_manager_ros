@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="rviz_path" default="$(find waypoint_manager_ros)/launch/rviz.rviz"/>
+    <arg name="map_path" default="$(find waypoint_manager_ros)/maps/map.yaml"/>
+    <arg name="width_ratio" default="1.0"/>
+    <arg name="is_visible_text" default="true"/>
+    <arg name="is_visible_edge" default="true"/>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_path)"/>
+    <node pkg="map_server" type="map_server" name="map_server" args="$(arg map_path)" output="screen"/>
+    <include file="$(find waypoint_manager_ros)/launch/waypoint_manager.launch">
+        <arg name="width_ratio" value="$(arg width_ratio)"/>
+        <arg name="is_visible_text" value="$(arg is_visible_text)"/>
+        <arg name="is_visible_edge" value="$(arg is_visible_edge)"/>
+    </include>
+</launch>
