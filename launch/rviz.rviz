@@ -61,11 +61,27 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /waypoints
+      Marker Topic: /waypoint_manager/waypoints
       Name: WayPoints
       Namespaces:
         waypoints: true
       Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.15000000596046448
+      Head Radius: 0.10000000149011612
+      Name: GlobalGoal
+      Queue Size: 10
+      Shaft Length: 0.10000000149011612
+      Shaft Radius: 0.05999999865889549
+      Shape: Arrow
+      Topic: /waypoint_manager/global_goal
+      Unreliable: false
       Value: true
   Enabled: true
   Global Options:
