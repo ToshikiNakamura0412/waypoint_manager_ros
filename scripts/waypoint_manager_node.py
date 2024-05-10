@@ -4,8 +4,9 @@ from dataclasses import dataclass
 
 import rospy
 import yaml
-from geometry_msgs.msg import Point, Quaternion, Vector3
-from std_msgs.msg import ColorRGBA
+from geometry_msgs.msg import Point, PoseStamped, Quaternion, Vector3
+from std_msgs.msg import Bool, ColorRGBA
+from std_srvs.srv import SetBool, SetBoolResponse
 from tf.transformations import quaternion_from_euler
 from visualization_msgs.msg import Marker, MarkerArray
 
@@ -41,7 +42,16 @@ class WaypointManager:
         )
 
         self._waypoint_pub = rospy.Publisher(
-            "waypoints", MarkerArray, queue_size=1, latch=True
+            "~waypoints", MarkerArray, queue_size=1, latch=True
+        )
+        self._goal_pose_pub = rospy.Publisher(
+            "~global_goal", PoseStamped, queue_size=1, latch=True
+        )
+        self._finish_flag_sub = rospy.Subscriber(
+            "finish_flag", Bool, self.finish_flag_callback, queue_size=1
+        )
+        self._update_goal_server = rospy.Service(
+            "~update_goal", SetBool, self.handle_update_goal
         )
 
         # Print parameters
@@ -50,14 +60,58 @@ class WaypointManager:
         rospy.loginfo("Parameters:")
         self._params.print()
 
-    def process(self) -> None:
+        # waypoints
         with open(self._params.waypoint_file, "r") as file:
-            waypoints = yaml.safe_load(file)
-        msg: MarkerArray = self.create_visualization(waypoints)
+            self._waypoints = yaml.safe_load(file)
+        if len(self._waypoints) < 2:
+            rospy.logerr("The number of waypoints must be greater than 1.")
+            exit(1)
+        # update count
+        self._update_count = 0
+        # goal pose
+        self._goal_pose = PoseStamped()
+        self._goal_pose.header.frame_id = self._params.frame_id
+        self.update_goal_pose(True)
 
+    def finish_flag_callback(self, msg: Bool) -> None:
+        self.update_goal_pose(msg.data)
+
+    def handle_update_goal(self, req: SetBool) -> SetBoolResponse:
+        res = SetBoolResponse()
+        if self.update_goal_pose(req.data):
+            res.success = True
+            res.message = "Update goal pose"
+        else:
+            res.success = False
+            res.message = "Finish"
+        return res
+
+    def update_goal_pose(self, flag: bool) -> bool:
+        if flag and self._update_count >= len(self._waypoints) - 1:
+            rospy.loginfo("Finish")
+            return False
+        elif flag:
+            rospy.loginfo("Update goal pose")
+            self._update_count += 1
+            self._goal_pose.pose.position = Point(
+                self._waypoints[self._update_count]["x"],
+                self._waypoints[self._update_count]["y"],
+                0.0,
+            )
+            self._goal_pose.pose.orientation = Quaternion(
+                *quaternion_from_euler(0, 0, self._waypoints[self._update_count]["yaw"])
+            )
+            return True
+        else:
+            return False
+
+    def process(self) -> None:
+        msg: MarkerArray = self.create_visualization(self._waypoints)
         r = rospy.Rate(self._params.hz)
         while not rospy.is_shutdown():
             self._waypoint_pub.publish(msg)
+            self._goal_pose.header.stamp = rospy.Time.now()
+            self._goal_pose_pub.publish(self._goal_pose)
             r.sleep()
 
     def create_visualization(self, waypoints) -> MarkerArray:
