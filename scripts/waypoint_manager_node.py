@@ -48,10 +48,10 @@ class WaypointManager:
             "~global_goal", PoseStamped, queue_size=1, latch=True
         )
         self._finish_flag_sub = rospy.Subscriber(
-            "finish_flag", Bool, self.finish_flag_callback, queue_size=1
+            "finish_flag", Bool, self._finish_flag_callback, queue_size=1
         )
         self._update_goal_server = rospy.Service(
-            "~update_goal", SetBool, self.handle_update_goal
+            "~update_goal", SetBool, self._handle_update_goal
         )
 
         # Print parameters
@@ -71,14 +71,14 @@ class WaypointManager:
         # goal pose
         self._goal_pose = PoseStamped()
         self._goal_pose.header.frame_id = self._params.frame_id
-        self.update_goal_pose(True)
+        self._update_goal_pose(True)
 
-    def finish_flag_callback(self, msg: Bool) -> None:
-        self.update_goal_pose(msg.data)
+    def _finish_flag_callback(self, msg: Bool) -> None:
+        self._update_goal_pose(msg.data)
 
-    def handle_update_goal(self, req: SetBool) -> SetBoolResponse:
+    def _handle_update_goal(self, req: SetBool) -> SetBoolResponse:
         res = SetBoolResponse()
-        if self.update_goal_pose(req.data):
+        if self._update_goal_pose(req.data):
             res.success = True
             res.message = "Update goal pose"
         else:
@@ -86,7 +86,7 @@ class WaypointManager:
             res.message = "Finish"
         return res
 
-    def update_goal_pose(self, flag: bool) -> bool:
+    def _update_goal_pose(self, flag: bool) -> bool:
         if flag and self._update_count >= len(self._waypoints) - 1:
             rospy.loginfo("Finish")
             return False
@@ -106,7 +106,7 @@ class WaypointManager:
             return False
 
     def process(self) -> None:
-        msg: MarkerArray = self.create_visualization(self._waypoints)
+        msg: MarkerArray = self._create_visualization(self._waypoints)
         r = rospy.Rate(self._params.hz)
         while not rospy.is_shutdown():
             self._waypoint_pub.publish(msg)
@@ -114,11 +114,11 @@ class WaypointManager:
             self._goal_pose_pub.publish(self._goal_pose)
             r.sleep()
 
-    def create_visualization(self, waypoints) -> MarkerArray:
+    def _create_visualization(self, waypoints) -> MarkerArray:
         msg = MarkerArray()
         for waypoint in waypoints:
             # Draw waypoints
-            arrow_maker = self.create_maker(
+            arrow_maker = self._create_maker(
                 id=waypoint["id"],
                 type=Marker.ARROW,
                 scale=Vector3(
@@ -134,7 +134,7 @@ class WaypointManager:
 
             # Draw text
             if self._params.is_visible_text:
-                test_maker = self.create_maker(
+                test_maker = self._create_maker(
                     id=100 + waypoint["id"],
                     type=Marker.TEXT_VIEW_FACING,
                     scale=Vector3(
@@ -153,7 +153,7 @@ class WaypointManager:
         # Draw lines
         if self._params.is_visible_edge:
             for i in range(len(waypoints) - 1):
-                line_maker = self.create_maker(
+                line_maker = self._create_maker(
                     id=200 + i,
                     type=Marker.LINE_STRIP,
                     scale=Vector3(
@@ -171,7 +171,7 @@ class WaypointManager:
 
         return msg
 
-    def create_maker(
+    def _create_maker(
         self,
         id: int,
         type: int,
