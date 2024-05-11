@@ -13,7 +13,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 @dataclass(frozen=True)
 class Params:
-    """class for managing parameters
+    """data class for parameters
 
     Attributes:
         frame_id (str): frame id
