@@ -73,12 +73,12 @@ Visualization Manager:
       Class: rviz/Pose
       Color: 255; 25; 0
       Enabled: true
-      Head Length: 0.15000000596046448
-      Head Radius: 0.10000000149011612
+      Head Length: 0.20000000298023224
+      Head Radius: 0.20000000298023224
       Name: GlobalGoal
       Queue Size: 10
-      Shaft Length: 0.10000000149011612
-      Shaft Radius: 0.05999999865889549
+      Shaft Length: 0.20000000298023224
+      Shaft Radius: 0.07999999821186066
       Shape: Arrow
       Topic: /waypoint_manager/global_goal
       Unreliable: false
@@ -120,7 +120,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 175.22840881347656
+      Scale: 173.23117065429688
       Target Frame: <Fixed Frame>
       X: 0
       Y: 0

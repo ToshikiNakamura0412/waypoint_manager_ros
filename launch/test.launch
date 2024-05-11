@@ -2,7 +2,7 @@
 <launch>
     <arg name="rviz_path" default="$(find waypoint_manager_ros)/launch/rviz.rviz"/>
     <arg name="map_path" default="$(find waypoint_manager_ros)/maps/map.yaml"/>
-    <arg name="width_ratio" default="1.0"/>
+    <arg name="width_ratio" default="0.3"/>
     <arg name="is_visible_text" default="true"/>
     <arg name="is_visible_edge" default="true"/>
 
