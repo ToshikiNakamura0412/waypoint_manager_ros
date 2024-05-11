@@ -13,6 +13,17 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 @dataclass(frozen=True)
 class Params:
+    """class for managing parameters
+
+    Attributes:
+        frame_id (str): frame id
+        waypoint_file (str): waypoint file
+        hz (int): publish rate
+        width_ratio (float): width ratio
+        is_visible_text (bool): is visible text
+        is_visible_edge (bool): is visible edge
+    """
+
     frame_id: str = "map"
     waypoint_file: str = "waypoints.yaml"
     hz: int = 1
@@ -21,6 +32,14 @@ class Params:
     is_visible_edge: bool = True
 
     def print(self) -> None:
+        """print parameters
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         rospy.loginfo(f"frame_id: {self.frame_id}")
         rospy.loginfo(f"waypoint_file: {self.waypoint_file}")
         rospy.loginfo(f"hz: {self.hz}")
@@ -30,7 +49,29 @@ class Params:
 
 
 class WaypointManager:
+    """class for managing waypoints
+
+    Attributes:
+        _params (Params): parameters
+        _waypoints (list): waypoints
+        _update_count (int): update count
+        _goal_pose (PoseStamped): goal pose
+        _waypoint_pub (Publisher): waypoints publisher
+        _goal_pose_pub (Publisher): goal pose publisher
+        _finish_flag_sub (Subscriber): finish flag subscriber
+        _update_goal_server (Service): update goal service
+    """
+
     def __init__(self) -> None:
+        """initialize waypoint manager
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
         rospy.init_node("waypoint_manager")
         self._params: Params = Params(
             frame_id=rospy.get_param("~frame_id", "map"),
@@ -74,9 +115,27 @@ class WaypointManager:
         self._update_goal_pose(True)
 
     def _finish_flag_callback(self, msg: Bool) -> None:
+        """finish flag callback
+
+        Args:
+            msg (Bool): finish flag message
+
+        Returns:
+            None
+        """
+
         self._update_goal_pose(msg.data)
 
     def _handle_update_goal(self, req: SetBool) -> SetBoolResponse:
+        """update goal service
+
+        Args:
+            req (SetBool): request
+
+        Returns:
+            SetBoolResponse: response
+        """
+
         res = SetBoolResponse()
         if self._update_goal_pose(req.data):
             res.success = True
@@ -87,6 +146,15 @@ class WaypointManager:
         return res
 
     def _update_goal_pose(self, flag: bool) -> bool:
+        """update goal pose
+
+        Args:
+            flag (bool): finish flag
+
+        Returns:
+            bool: update flag
+        """
+
         if flag and self._update_count >= len(self._waypoints) - 1:
             rospy.loginfo("Finish")
             return False
@@ -106,6 +174,15 @@ class WaypointManager:
             return False
 
     def process(self) -> None:
+        """process
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
         msg: MarkerArray = self._create_visualization(self._waypoints)
         r = rospy.Rate(self._params.hz)
         while not rospy.is_shutdown():
@@ -115,6 +192,15 @@ class WaypointManager:
             r.sleep()
 
     def _create_visualization(self, waypoints) -> MarkerArray:
+        """create visualization
+
+        Args:
+            waypoints (list): waypoints
+
+        Returns:
+            MarkerArray: visualization message
+        """
+
         msg = MarkerArray()
         for waypoint in waypoints:
             # Draw waypoints
@@ -180,6 +266,20 @@ class WaypointManager:
         yaw: float = 0.0,
         point: Point = Point(),
     ) -> Marker:
+        """create maker
+
+        Args:
+            id (int): id
+            type (int): type
+            scale (Vector3): scale
+            rgba (ColorRGBA): color
+            yaw (float): yaw
+            point (Point): point
+
+        Returns:
+            Marker: marker
+        """
+
         marker = Marker()
         marker.header.frame_id = self._params.frame_id
         marker.header.stamp = rospy.Time.now()
