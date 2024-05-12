@@ -4,7 +4,13 @@ from dataclasses import dataclass
 
 import rospy
 import yaml
-from geometry_msgs.msg import Point, PoseStamped, Quaternion, Vector3
+from geometry_msgs.msg import (
+    Point,
+    PoseStamped,
+    PoseWithCovarianceStamped,
+    Quaternion,
+    Vector3,
+)
 from std_msgs.msg import Bool, ColorRGBA
 from std_srvs.srv import SetBool, SetBoolResponse
 from tf.transformations import quaternion_from_euler
@@ -18,6 +24,7 @@ class Params:
     Attributes:
         frame_id (str): frame id
         waypoint_file (str): waypoint file
+        start (int): start id of robot
         hz (int): publish rate
         width_ratio (float): width ratio
         is_visible_text (bool): is visible text
@@ -26,6 +33,7 @@ class Params:
 
     frame_id: str = "map"
     waypoint_file: str = "waypoints.yaml"
+    start: int = 0
     hz: int = 1
     width_ratio: float = 1.0
     is_visible_text: bool = True
@@ -42,6 +50,7 @@ class Params:
         """
         rospy.loginfo(f"frame_id: {self.frame_id}")
         rospy.loginfo(f"waypoint_file: {self.waypoint_file}")
+        rospy.loginfo(f"start: {self.start}")
         rospy.loginfo(f"hz: {self.hz}")
         rospy.loginfo(f"width_ratio: {self.width_ratio}")
         rospy.loginfo(f"is_visible_text: {self.is_visible_text}")
@@ -76,6 +85,7 @@ class WaypointManager:
         self._params: Params = Params(
             frame_id=rospy.get_param("~frame_id", "map"),
             waypoint_file=rospy.get_param("~waypoint_file", "waypoints.yaml"),
+            start=rospy.get_param("~start", 0),
             hz=rospy.get_param("~hz", 1),
             width_ratio=rospy.get_param("~width_ratio", 1.0),
             is_visible_text=rospy.get_param("~is_visible_text", True),
@@ -87,6 +97,9 @@ class WaypointManager:
         )
         self._goal_pose_pub = rospy.Publisher(
             "~global_goal", PoseStamped, queue_size=1, latch=True
+        )
+        self._initialpose_pub = rospy.Publisher(
+            "/initialpose", PoseWithCovarianceStamped, queue_size=1, latch=True
         )
         self._finish_flag_sub = rospy.Subscriber(
             "finish_flag", Bool, self._finish_flag_callback, queue_size=1
@@ -107,12 +120,24 @@ class WaypointManager:
         if len(self._waypoints) < 2:
             rospy.logerr("The number of waypoints must be greater than 1.")
             exit(1)
+        elif len(self._waypoints) <= self._params.start:
+            rospy.logerr("The start robot id is out of range.")
+            exit(1)
         # update count
         self._update_count = 0
         # goal pose
         self._goal_pose = PoseStamped()
         self._goal_pose.header.frame_id = self._params.frame_id
-        self._update_goal_pose(True)
+        for i in range(self._params.start + 1):
+            self._update_goal_pose(True)
+        # initial robot pose
+        rospy.sleep(1.0)
+        initialpose = PoseWithCovarianceStamped()
+        initialpose.header.frame_id = self._params.frame_id
+        initialpose.header.stamp = rospy.Time.now()
+        initialpose.pose.pose.position = Point(self._waypoints[self._params.start]["x"], self._waypoints[self._params.start]["y"], 0.0)
+        initialpose.pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, self._waypoints[self._params.start]["yaw"]))
+        self._initialpose_pub.publish(initialpose)
 
     def _finish_flag_callback(self, msg: Bool) -> None:
         """finish flag callback
