@@ -114,15 +114,8 @@ class WaypointManager:
         rospy.loginfo("Parameters:")
         self._params.print()
 
-        # waypoints
-        with open(self._params.waypoint_file, "r") as file:
-            self._waypoints = yaml.safe_load(file)
-        if len(self._waypoints) < 2:
-            rospy.logerr("The number of waypoints must be greater than 1.")
-            exit(1)
-        elif len(self._waypoints) <= self._params.start:
-            rospy.logerr("The start robot id is out of range.")
-            exit(1)
+        # waypoints loading
+        self._waypoints = self._load_waypoints(self._params.waypoint_file)
         # update count
         self._update_count = 0
         # goal pose
@@ -135,9 +128,35 @@ class WaypointManager:
         initialpose = PoseWithCovarianceStamped()
         initialpose.header.frame_id = self._params.frame_id
         initialpose.header.stamp = rospy.Time.now()
-        initialpose.pose.pose.position = Point(self._waypoints[self._params.start]["x"], self._waypoints[self._params.start]["y"], 0.0)
-        initialpose.pose.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, self._waypoints[self._params.start]["yaw"]))
+        initialpose.pose.pose.position = Point(
+            self._waypoints[self._params.start]["x"],
+            self._waypoints[self._params.start]["y"],
+            0.0,
+        )
+        initialpose.pose.pose.orientation = Quaternion(
+            *quaternion_from_euler(0, 0, self._waypoints[self._params.start]["yaw"])
+        )
         self._initialpose_pub.publish(initialpose)
+
+    def _load_waypoints(self, file_path: str) -> list:
+        """load waypoints
+
+        Args:
+            file_path (str): file path
+
+        Returns:
+            list: waypoints
+        """
+
+        with open(file_path, "r") as file:
+            waypoints = yaml.safe_load(file)
+        if len(waypoints) < 2:
+            rospy.logerr("The number of waypoints must be greater than 1.")
+            exit(1)
+        elif len(waypoints) <= self._params.start:
+            rospy.logerr("The start robot id is out of range.")
+            exit(1)
+        return waypoints
 
     def _finish_flag_callback(self, msg: Bool) -> None:
         """finish flag callback
@@ -208,9 +227,10 @@ class WaypointManager:
             None
         """
 
-        msg: MarkerArray = self._create_visualization(self._waypoints)
         r = rospy.Rate(self._params.hz)
         while not rospy.is_shutdown():
+            self._waypoints = self._load_waypoints(self._params.waypoint_file)
+            msg: MarkerArray = self._create_visualization(self._waypoints)
             self._waypoint_pub.publish(msg)
             self._goal_pose.header.stamp = rospy.Time.now()
             self._goal_pose_pub.publish(self._goal_pose)
