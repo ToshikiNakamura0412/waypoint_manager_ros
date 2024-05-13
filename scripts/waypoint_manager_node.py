@@ -122,24 +122,39 @@ class WaypointManager:
         # goal pose
         self._goal_pose = PoseStamped()
         self._goal_pose.header.frame_id = self._params.frame_id
-        for i in range(self._params.start + 1):
-            self._update_goal_pose(True)
-        # initial robot pose
-        rospy.sleep(1.0)
-        initialpose = PoseWithCovarianceStamped()
-        initialpose.header.frame_id = self._params.frame_id
-        initialpose.header.stamp = rospy.Time.now()
-        initialpose.pose.pose.position = Point(
-            self._waypoints[self._params.start]["x"],
-            self._waypoints[self._params.start]["y"],
-            0.0,
-        )
-        initialpose.pose.pose.orientation = Quaternion(
-            *quaternion_from_euler(
-                0, 0, self._waypoints[self._params.start]["yaw"]
+        if (
+            len(self._waypoints) == 1
+            or self._params.start >= len(self._waypoints) - 1
+        ):
+            self._goal_pose.pose.position = Point(
+                self._waypoints[-1]["x"],
+                self._waypoints[-1]["y"],
+                0.0,
             )
-        )
-        self._initialpose_pub.publish(initialpose)
+            self._goal_pose.pose.orientation = Quaternion(
+                *quaternion_from_euler(0, 0, self._waypoints[-1]["yaw"])
+            )
+            self._update_count = len(self._waypoints) - 1
+        else:
+            for i in range(self._params.start + 1):
+                self._update_goal_pose(True)
+        # initial robot pose
+        if self._params.start < len(self._waypoints):
+            rospy.sleep(1.0)
+            initialpose = PoseWithCovarianceStamped()
+            initialpose.header.frame_id = self._params.frame_id
+            initialpose.header.stamp = rospy.Time.now()
+            initialpose.pose.pose.position = Point(
+                self._waypoints[self._params.start]["x"],
+                self._waypoints[self._params.start]["y"],
+                0.0,
+            )
+            initialpose.pose.pose.orientation = Quaternion(
+                *quaternion_from_euler(
+                    0, 0, self._waypoints[self._params.start]["yaw"]
+                )
+            )
+            self._initialpose_pub.publish(initialpose)
 
     def _load_waypoints(self, file_path: str) -> list:
         """load waypoints
