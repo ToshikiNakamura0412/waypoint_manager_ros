@@ -113,6 +113,7 @@ class WaypointManager:
         rospy.loginfo("")
         rospy.loginfo("Parameters:")
         self._params.print()
+        rospy.loginfo("")
 
         # waypoints loading
         self._waypoints = self._load_waypoints(self._params.waypoint_file)
@@ -200,10 +201,10 @@ class WaypointManager:
         """
 
         if flag and self._update_count >= len(self._waypoints) - 1:
-            rospy.loginfo("Finish")
+            rospy.logwarn("Finish")
             return False
         elif flag:
-            rospy.loginfo("Update goal pose")
+            rospy.logwarn("Update goal pose")
             self._update_count += 1
             self._goal_pose.pose.position = Point(
                 self._waypoints[self._update_count]["x"],
