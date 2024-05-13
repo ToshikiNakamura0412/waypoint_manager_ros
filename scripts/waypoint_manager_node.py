@@ -135,7 +135,9 @@ class WaypointManager:
             0.0,
         )
         initialpose.pose.pose.orientation = Quaternion(
-            *quaternion_from_euler(0, 0, self._waypoints[self._params.start]["yaw"])
+            *quaternion_from_euler(
+                0, 0, self._waypoints[self._params.start]["yaw"]
+            )
         )
         self._initialpose_pub.publish(initialpose)
 
@@ -212,7 +214,9 @@ class WaypointManager:
                 0.0,
             )
             self._goal_pose.pose.orientation = Quaternion(
-                *quaternion_from_euler(0, 0, self._waypoints[self._update_count]["yaw"])
+                *quaternion_from_euler(
+                    0, 0, self._waypoints[self._update_count]["yaw"]
+                )
             )
             return True
         else:
@@ -276,7 +280,9 @@ class WaypointManager:
                     ),
                     rgba=ColorRGBA(0.0, 0.0, 0.0, 1.0),
                     point=Point(
-                        waypoint["x"], waypoint["y"], self._params.width_ratio * 0.5
+                        waypoint["x"],
+                        waypoint["y"],
+                        self._params.width_ratio * 0.5,
                     ),
                 )
                 test_maker.text = str(waypoint["id"])
@@ -295,7 +301,9 @@ class WaypointManager:
                     ),
                     rgba=ColorRGBA(0.0, 0.0, 1.0, 0.5),
                 )
-                line_maker.points.append(Point(waypoints[i]["x"], waypoints[i]["y"], 0))
+                line_maker.points.append(
+                    Point(waypoints[i]["x"], waypoints[i]["y"], 0)
+                )
                 line_maker.points.append(
                     Point(waypoints[i + 1]["x"], waypoints[i + 1]["y"], 0)
                 )
