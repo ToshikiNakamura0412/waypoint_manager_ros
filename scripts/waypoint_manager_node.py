@@ -151,14 +151,16 @@ class WaypointManager:
             list: waypoints
         """
 
-        with open(file_path, "r") as file:
-            waypoints = yaml.safe_load(file)
-        if len(waypoints) < 2:
-            rospy.logerr("The number of waypoints must be greater than 1.")
-            exit(1)
-        elif len(waypoints) <= self._params.start:
-            rospy.logerr("The start robot id is out of range.")
-            exit(1)
+        while not rospy.is_shutdown():
+            try:
+                with open(file_path, "r", encoding="utf-8") as file:
+                    waypoints = yaml.safe_load(file)
+                    if waypoints is not None:
+                        break
+            except Exception as e:
+                rospy.logerr_throttle(5.0, e)
+                rospy.sleep(1.0)
+
         return waypoints
 
     def _finish_flag_callback(self, msg: Bool) -> None:
