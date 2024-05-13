@@ -371,7 +371,7 @@ class WaypointManager:
         marker.pose.orientation = Quaternion(*quaternion_from_euler(0, 0, yaw))
         marker.scale = scale
         marker.color = rgba
-        marker.lifetime = rospy.Duration()
+        marker.lifetime = rospy.Duration(self._params.hz)
         return marker
 
 
