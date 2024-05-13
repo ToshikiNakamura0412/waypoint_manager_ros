@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+Waypoint Manager Node
+author: Toshiki Nakamura
+"""
+
 from dataclasses import dataclass
 
 import rospy
@@ -92,19 +97,19 @@ class WaypointManager:
             is_visible_edge=rospy.get_param("~is_visible_edge", True),
         )
 
-        self._waypoint_pub = rospy.Publisher(
+        self._waypoint_pub: rospy.Publisher = rospy.Publisher(
             "~waypoints", MarkerArray, queue_size=1, latch=True
         )
-        self._goal_pose_pub = rospy.Publisher(
+        self._goal_pose_pub: rospy.Publisher = rospy.Publisher(
             "~global_goal", PoseStamped, queue_size=1, latch=True
         )
-        self._initialpose_pub = rospy.Publisher(
+        self._initialpose_pub: rospy.Publisher = rospy.Publisher(
             "/initialpose", PoseWithCovarianceStamped, queue_size=1, latch=True
         )
-        self._finish_flag_sub = rospy.Subscriber(
+        self._finish_flag_sub: rospy.Subscriber = rospy.Subscriber(
             "finish_flag", Bool, self._finish_flag_callback, queue_size=1
         )
-        self._update_goal_server = rospy.Service(
+        self._update_goal_server: rospy.Service = rospy.Service(
             "~update_goal", SetBool, self._handle_update_goal
         )
 
@@ -116,11 +121,13 @@ class WaypointManager:
         rospy.loginfo("")
 
         # waypoints loading
-        self._waypoints = self._load_waypoints(self._params.waypoint_file)
+        self._waypoints: list = self._load_waypoints(
+            self._params.waypoint_file
+        )
         # update count
-        self._update_count = 0
+        self._update_count: int = 0
         # goal pose
-        self._goal_pose = PoseStamped()
+        self._goal_pose: PoseStamped = PoseStamped()
         self._goal_pose.header.frame_id = self._params.frame_id
         if (
             len(self._waypoints) == 1
@@ -136,12 +143,14 @@ class WaypointManager:
             )
             self._update_count = len(self._waypoints) - 1
         else:
-            for i in range(self._params.start + 1):
+            for _ in range(self._params.start + 1):
                 self._update_goal_pose(True)
         # initial robot pose
         if self._params.start < len(self._waypoints):
             rospy.sleep(1.0)
-            initialpose = PoseWithCovarianceStamped()
+            initialpose: PoseWithCovarianceStamped = (
+                PoseWithCovarianceStamped()
+            )
             initialpose.header.frame_id = self._params.frame_id
             initialpose.header.stamp = rospy.Time.now()
             initialpose.pose.pose.position = Point(
@@ -169,7 +178,7 @@ class WaypointManager:
         while not rospy.is_shutdown():
             try:
                 with open(file_path, "r", encoding="utf-8") as file:
-                    waypoints = yaml.safe_load(file)
+                    waypoints: list = yaml.safe_load(file)
                     if waypoints is not None:
                         break
             except Exception as e:
@@ -200,7 +209,7 @@ class WaypointManager:
             SetBoolResponse: response
         """
 
-        res = SetBoolResponse()
+        res: SetBoolResponse = SetBoolResponse()
         if self._update_goal_pose(req.data):
             res.success = True
             res.message = "Update goal pose"
@@ -268,10 +277,10 @@ class WaypointManager:
             MarkerArray: visualization message
         """
 
-        msg = MarkerArray()
+        msg: MarkerArray = MarkerArray()
         for waypoint in waypoints:
             # Draw waypoints
-            arrow_maker = self._create_maker(
+            arrow_maker: Marker = self._create_maker(
                 id=waypoint["id"],
                 type=Marker.ARROW,
                 scale=Vector3(
@@ -287,7 +296,7 @@ class WaypointManager:
 
             # Draw text
             if self._params.is_visible_text:
-                test_maker = self._create_maker(
+                test_maker: Marker = self._create_maker(
                     id=100 + waypoint["id"],
                     type=Marker.TEXT_VIEW_FACING,
                     scale=Vector3(
@@ -308,7 +317,7 @@ class WaypointManager:
         # Draw lines
         if self._params.is_visible_edge:
             for i in range(len(waypoints) - 1):
-                line_maker = self._create_maker(
+                line_maker: Marker = self._create_maker(
                     id=200 + i,
                     type=Marker.LINE_STRIP,
                     scale=Vector3(
@@ -351,7 +360,7 @@ class WaypointManager:
             Marker: marker
         """
 
-        marker = Marker()
+        marker: Marker = Marker()
         marker.header.frame_id = self._params.frame_id
         marker.header.stamp = rospy.Time.now()
         marker.ns = "waypoints"
@@ -372,4 +381,3 @@ if __name__ == "__main__":
         node.process()
     except rospy.ROSInterruptException:
         rospy.loginfo("Exception caught")
-        pass
