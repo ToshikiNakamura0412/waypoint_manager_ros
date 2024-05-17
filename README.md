@@ -4,9 +4,9 @@
 
 The ROS package for waypoint management
 
-Publish the goal pose in order from id 1
+Publish the goal pose of the ID specified as the parameter start as the initial pose of the robot at node startup
 
-Publish goal pose with id 0 as initial pose of the robot at node startup
+Publish the goal pose in order from id "parameter start + 1"
 
 <p align="center">
   <img src="images/waypoint_manager.png" height="320px"/>
