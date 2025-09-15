@@ -1,5 +1,6 @@
 # waypoint_manager_ros
 
+[![lint](https://github.com/ToshikiNakamura0412/waypoint_manager_ros/actions/workflows/lint.yaml/badge.svg)](https://github.com/ToshikiNakamura0412/waypoint_manager_ros/actions/workflows/lint.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 The ROS package for waypoint management
